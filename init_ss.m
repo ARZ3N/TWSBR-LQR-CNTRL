@@ -188,20 +188,17 @@ for k=2:j
     end
     u(k) =  sig;
 end
-%{
-noise = sin(2*pi*10*t);
 u = u.*-1;
-
-
 plot(t, u, 'LineWidth', 1.4);
 grid on
 title('Reference Signal: r (x desired)')
 xlabel("Time (sec)")
 ylabel("Magnitude")
-pause;
-%}
+%pause;
+
 x0 = [0.0, 0.0, 0.1, 0.0];
-u = t.^2;
+
+u = t.^3;
 
 
 %{
@@ -215,7 +212,7 @@ for it = 1: len(2)
     input_sig(it) = -Kr*(u(it) - y(it)) - full_state;
 end
 %}
-
+%{
 %--------------- FF + ER ----------------------------------------
 [y, t, x] = lsim(fd_sys{10}, u, t, x0);
 plot(t, x(:, 1), 'DisplayName', 'fd-10 x', 'LineWidth', 1.4);
@@ -234,7 +231,13 @@ plot(t, x(:, 1), 'DisplayName', 'fd-1 x', 'LineWidth', 1.4);
 hold on;
 plot(t, x(:, 3), 'DisplayName', 'fd-1 theta', 'LineWidth', 1.4);
 hold off
-pause;
+legend();
+title('Sys-1 States(x, theta) with FS + ER FDBK, Q-R varying ')
+xlabel("Time (sec)")
+ylabel("States")
+%pause;
+%}
+%{
 %------------------ FS -------------------------------------------
 [y_fs, t_fs, x_fs] = lsim(fd_sys_fs{10}, u, t, x0);
 plot(t_fs, x_fs(:, 1), 'DisplayName', 'fd-10 x', 'LineWidth', 1.4);
@@ -254,8 +257,6 @@ plot(t_fs, x_fs(:, 1), 'DisplayName', 'fd-1 x', 'LineWidth', 1.4);
 hold on;
 plot(t_fs, x_fs(:, 3), 'DisplayName', 'fd-1 theta', 'LineWidth', 1.4);
 hold off
-
-
 hold off
 legend();
 title('Sys-1 States(x, theta) for SS with FS FDBK, Q-R varying ')
@@ -263,10 +264,27 @@ xlabel("Time (sec)")
 ylabel("States")
 %pause; 
 
+%-------------- Combined ---------------------------------------------
+[y, t, x] = lsim(fd_sys{10}, u, t, x0);
+plot(t, x(:, 1), 'DisplayName', 'fd-10 x', 'LineWidth', 1.4);
+grid on
+hold on
+plot(t, x(:, 3), 'DisplayName', 'fd-10 theta', 'LineWidth', 1.4);
+hold on
+[y_fs, t_fs, x_fs] = lsim(fd_sys_fs{10}, u, t, x0);
+plot(t, x_fs(:, 1), 'DisplayName', 'fd-fs-10 x', 'LineWidth', 1.4);
+hold on
+plot(t_fs, x_fs(:, 3), 'DisplayName', 'fd-fs-10 theta', 'LineWidth', 1.4);
+hold off
+legend();
+title('Comparison of Tracking Control for FS, FS + ER')
+xlabel("Time (sec)")
+ylabel("States")
+%}
 
-%{
+
 %--------System 2 --------------------------------
-u = t;
+u = ones(size(t));
 x0 = [0.1, 0.0];
 [y, t, x] = lsim(fd_sys2{10}, u, t, x0);
 plot(t, x(:, 1), 'DisplayName', 'fdsys2-10 del', 'LineWidth', 1.4);
@@ -291,6 +309,25 @@ title('System 2 states with FS FDBK, Q, R varying')
 xlabel("Time (sec)")
 ylabel("States")
 %--------------------------------------------------
+
+%{
+%----------------- sys-2 combined -------------------------
+u = ones(size(t));
+x0 = [0.1, 0.0];
+[y, t, x] = lsim(fd_sys2{10}, u, t, x0);
+plot(t, x(:, 1), 'DisplayName', 'fdsys2-10 del', 'LineWidth', 1.4);
+hold on
+grid on
+plot(t, x(:, 2), 'DisplayName', 'fdsys2-10 del-dot', 'LineWidth', 1.4);
+[y_fs, t_fs, x_fs] = lsim(fd_sys2_fs{10}, u, t, x0);
+plot(t_fs, x_fs(:, 1), 'DisplayName', 'fdsys2-fs-10 del', 'LineWidth', 1.4);
+hold on
+plot(t_fs, x_fs(:, 2), 'DisplayName', 'fdsys2-fs-10 del-dot', 'LineWidth', 1.4);
+hold off
+legend();
+title("Sys-2 Comparison of FS & FS + ER FDBK")
+xlabel('Time (sec)')
+ylabel('States')
 %}
 
 %% Functions
