@@ -122,27 +122,18 @@ for k = 1:10
 end
 R = [center];
 
-%Q = [1 0 0 0 0 0; 0 1 0 0 0 0; 0 0 1 0 0 0; 0 0 0 1 0 0; 0 0 0 0 1 0; 0 0 0 0 0 1];  for OG sys
-%q = [1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1]; % for sys 1
-%Q = [1 0; 0 1]; % for sys2
-%R = [1 0; 0 1];     % for OG sys
-%r = [1];    % for sys1, sys1
-%k_noob = lqr(Asys1, Bsys1, q, r)
-%fd_noob = ss(Asys1 - Bsys1*k_noob, Bsys1, Csys1, Dsys1);
-
-%%
 fprintf("LQR gain matrix: \n");
 K = {};
 fd_sys = {};
 fd_sys_fs = {};
-Kr = [2];
-%K0 = lqr(Asys1, Bsys1, eye(4), eye(1));
+Kp = [2];
+
 for k = 1:10
     fprintf("pass k: %d \n", k);
     K{k} = lqr(Asys1, Bsys1, Q{k}, R);
-    %K{k} = lqr(Asys1 - Bsys1*K0 - Bsys1*Kr*Csys1, Bsys1*Kr, Q{k}, R);
+    %K{k} = lqr(Asys1 - Bsys1*K0 - Bsys1*Kp*Csys1, Bsys1*Kp, Q{k}, R);
     fd_sys_fs{k} = ss(Asys1 - Bsys1*K{k}, Bsys1, Csys1, Dsys1); %#ok<SAGROW> 
-    fd_sys{k} = ss(Asys1 - Bsys1*K{k} + Bsys1*Kr*Csys1, -Bsys1*Kr, Csys1, Dsys1);
+    fd_sys{k} = ss(Asys1 - Bsys1*K{k} + Bsys1*Kp*Csys1, -Bsys1*Kp, Csys1, Dsys1);
 
 end
 sys1_dcg = dcgain(fd_sys{10});
@@ -161,18 +152,18 @@ R2 = [rc2];
 
 fd_sys2 = {};
 fd_sys2_fs = {};
-Kr2 = [10.0];
+Kp2 = [10.0];
 K0 = lqr(Asys2, Bsys2, eye(2), eye(1));
 for k = 1:10
     fprintf("pass k: %d \n", k);
     %K2{k} = lqr(Asys2, Bsys2, Q2{k}, R);
-    K2{k} = lqr(Asys2 - Bsys2*K0 - Bsys2*Kr2*Csys2, Bsys2*Kr2, Q2{k}, R2);
+    K2{k} = lqr(Asys2 - Bsys2*K0 - Bsys2*Kp2*Csys2, Bsys2*Kp2, Q2{k}, R2);
     fd_sys2_fs{k} = ss(Asys2 - Bsys2*K2{k}, Bsys2, Csys2, Dsys2);
-    fd_sys2{k} = ss(Asys2 - Bsys2*K2{k} - Bsys2*Kr2*Csys2, Bsys2*Kr2, Csys2, Dsys2);
+    fd_sys2{k} = ss(Asys2 - Bsys2*K2{k} - Bsys2*Kp2*Csys2, Bsys2*Kp2, Csys2, Dsys2);
 end
 
 
-%% 
+%% Simulation Runs and Graphs
 
 % System 1 plots
 t = 0:0.1:10;
@@ -209,11 +200,12 @@ for it = 1: len(2)
     full_state(it) = K{10} * (x(it, :).');
 end
 for it = 1: len(2)
-    input_sig(it) = -Kr*(u(it) - y(it)) - full_state;
+    input_sig(it) = -Kp*(u(it) - y(it)) - full_state;
 end
 %}
-%{
-%--------------- FF + ER ----------------------------------------
+%{ 
+% Uncomment to plot Response for Full-state and Error Term 
+--------------- FS + ER ----------------------------------------
 [y, t, x] = lsim(fd_sys{10}, u, t, x0);
 plot(t, x(:, 1), 'DisplayName', 'fd-10 x', 'LineWidth', 1.4);
 grid on
@@ -238,7 +230,8 @@ ylabel("States")
 %pause;
 %}
 %{
-%------------------ FS -------------------------------------------
+% Uncomment to plot responses for Sys-1 only Full-State
+------------------ FS -------------------------------------------
 [y_fs, t_fs, x_fs] = lsim(fd_sys_fs{10}, u, t, x0);
 plot(t_fs, x_fs(:, 1), 'DisplayName', 'fd-10 x', 'LineWidth', 1.4);
 grid on
@@ -330,7 +323,7 @@ xlabel('Time (sec)')
 ylabel('States')
 %}
 
-%% Functions
+%% Bounding Functions
 function [ret] = circular(x, cen, rad)
     ret = cen + sqrt((rad^2) - ((x - cen)^2));
 end
